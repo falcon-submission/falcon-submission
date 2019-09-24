@@ -1,4 +1,4 @@
-FALCON: FAst and Lightweight CONvolution
+FALCON: Fast and Lightweight Convolution for Compressing and Accelerating CNN
 ===
 
 This package provides implementations of FALCON/FALCONBranch convolution with their corresponding CNN model.
