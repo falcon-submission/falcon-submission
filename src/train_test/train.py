@@ -18,11 +18,6 @@ under the License.
 
 FALCON: FAst and Lightweight CONvolution
 
-Authors:
- - Chun Quan (quanchun@snu.ac.kr)
- - U Kang (ukang@snu.ac.kr)
- - Data Mining Lab. at Seoul National University.
-
 File: train_test/train_test.py
  - Contain training code for execution for model.
 
