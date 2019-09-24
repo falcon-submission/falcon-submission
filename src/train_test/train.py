@@ -18,7 +18,7 @@ under the License.
 
 FALCON: FAst and Lightweight CONvolution
 
-File: train_test/train_test.py
+File: train_test/train.py
  - Contain training code for execution for model.
 
 Version: 1.0
