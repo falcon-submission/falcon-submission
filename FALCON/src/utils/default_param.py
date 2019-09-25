@@ -81,10 +81,10 @@ def get_default_param():
                         default=1)
 
     parser.add_argument("-m", "--model",
-                        help="model type - VGG16/VGG19/MobileNet/LeNet/VGG_en",
-                        choices=['VGG16', 'VGG19', 'MobileNet', 'ResNet', 'LeNet', 'VGG_en', 'VGG_en1', 'MobileNetV2'],
+                        help="model type - VGG16/VGG19/ResNet",
+                        choices=['VGG16', 'VGG19', 'ResNet'],
                         type=str,
-                        default='MobileNet')
+                        default='VGG19')
 
     parser.add_argument("-data", "--datasets",
                         help="specify datasets - cifar10/cifar100/svhn/mnist/tinyimagenet/imagenet",
@@ -137,17 +137,5 @@ def get_default_param():
                         help="restore model from the path",
                         type=str,
                         default='')
-
-    # for tucker
-    parser.add_argument("-tucker", "--tucker",
-                        help="Use tucker decomposition to compress model with standardconv",
-                        action="store_true")
-    parser.add_argument("-ti", "--tucker_init",
-                        help="whether initialize with tucker decomposition result",
-                        action="store_true")
-    parser.add_argument("-mul", "--multiplier",
-                        help="multiplier for tucker's rank",
-                        type=float,
-                        default=1.0)
 
     return parser

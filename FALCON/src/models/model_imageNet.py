@@ -28,11 +28,6 @@ import torch
 import torch.nn as nn
 
 from models.falcon import EHPdecompose
-from utils.tucker import Tucker2DecomposedConv
-from models.dsconv import DepthwiseSeparableConv
-from models.mobileconvv2 import Block as Block_MobileConvV2
-from models.shuffleunit import ShuffleUnit
-from models.shuffleunitv2 import ShuffleUnitV2
 from models.stconv_branch import StConv_branch
 
 class VGGModel_imagenet(nn.Module):

@@ -114,8 +114,6 @@ parser.add_argument('-init', '--init', action='store_true',
                     help='initialize model with EHP decomposed tensors')
 parser.add_argument("-k", "--falconrank", type=int, default=1, choices=[1, 2, 3],
                     help="expansion ration in MobileConvV2")
-parser.add_argument('-tucker', '--tucker', action='store_true',
-                    help='initialize model with tucekr decomposed tensors')
 parser.add_argument("-exp", "--expansion", type=float, default=6.0,
                     help="expansion ration in MobileConvV2")
 parser.add_argument("-g", "--groups", type=int, default=2,
@@ -131,15 +129,6 @@ parser.add_argument("-in", "--input_num", type=int, default=100,
 parser.add_argument('--stconv_branch_model', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
 
-
-# parser.add_argument('-bn', '--bn', action='store_true',
-#                     help='add batch_normalization after FALCON')
-# parser.add_argument('-relu', '--relu', action='store_true',
-#                     help='add relu function after FALCON')
-# parser.add_argument("-k", "--EHPrank", choices=[1, 2, 3], type=int, default=1,
-#                     help="if the model is Rank K, the rank(k) in range {1,2,3}")
-# parser.add_argument("-al", "--alpha", type=float, default=1,
-#                     help="Width Multiplier in range (0,1]")
 
 best_acc1 = 0
 
@@ -240,8 +229,6 @@ def main_worker(gpu, ngpus_per_node, args):
     elif args.convolution == 'FALCONBranch':
         model.stconv_branch(alpha=args.alpha)
         # model.falcon_branch(init=args.init)
-    elif args.convolution == 'StandardConv' and args.tucker:
-        model.compress_tucker()
     else:
         pass
 

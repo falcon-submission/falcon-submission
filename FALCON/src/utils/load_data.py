@@ -88,7 +88,7 @@ def load_cifar10(is_train=True, batch_size=128):
     else:
         testset = torchvision.datasets.CIFAR10(root='./data',
                                                train=False,
-                                               download=False,
+                                               download=True,
                                                transform=transform_test)
         testloader = torch.utils.data.DataLoader(testset,
                                                  batch_size=batch_size,
@@ -116,7 +116,7 @@ def load_cifar100(is_train=True, batch_size=128):
         # dataset
         trainset = torchvision.datasets.CIFAR100(root='./data',
                                                  train=True,
-                                                 download=False,
+                                                 download=True,
                                                  transform=transform_train)
         # valset = torchvision.datasets.CIFAR100(root='./data',
         #                                        train=True,
@@ -152,7 +152,7 @@ def load_cifar100(is_train=True, batch_size=128):
     else:
         testset = torchvision.datasets.CIFAR100(root='./data',
                                                 train=False,
-                                                download=False,
+                                                download=True,
                                                 transform=transform_test)
         testloader = torch.utils.data.DataLoader(testset,
                                                  batch_size=batch_size,
@@ -182,7 +182,7 @@ def load_svhn(is_train=True, batch_size=128):
         return trainloader
 
     else:
-        testset = torchvision.datasets.SVHN(root='./data', split='test', download=False, transform=transform_test)
+        testset = torchvision.datasets.SVHN(root='./data', split='test', download=True, transform=transform_test)
         testloader = torch.utils.data.DataLoader(testset,
                                                  batch_size=batch_size,
                                                  shuffle=False,

@@ -26,12 +26,6 @@ Version: 1.0
 
 import torch.nn as nn
 from models.falcon import EHPdecompose
-from models.dsconv import DepthwiseSeparableConv
-from utils.tucker import Tucker2DecomposedConv
-from models.mobileconvv2 import Block as Block_MobileConvV2
-from models.shuffleunit import ShuffleUnit
-from models.shuffleunitv2 import ShuffleUnitV2
-
 
 class VGG(nn.Module):
     """
@@ -94,10 +88,7 @@ class VGG(nn.Module):
             pass
 
         for cfg in self.cfgs:
-            # if len(cfg) == 3:
-            #     layers.append(nn.Conv2d(cfg[0], cfg[1], kernel_size=3, stride=cfg[2], padding=0))
-            # else:
-            #     layers.append(nn.Conv2d(cfg[0], cfg[1], kernel_size=3, stride=1, padding=1))
+
             layers.append(nn.Conv2d(cfg[0], cfg[1], kernel_size=3, stride=1, padding=1))
             layers.append(nn.BatchNorm2d(cfg[1]))
             layers.append(nn.ReLU())
@@ -109,18 +100,6 @@ class VGG(nn.Module):
         """Run forward propagation"""
         out_conv = self.conv(x)
         out_conv = self.layers(out_conv)
-        # for i in range(len(self.layers)):
-        #     out_conv = self.layers[i](out_conv)
-        #     if isinstance(self.layers[i], EHPdecompose):
-        #         if self.layers[i].pw.in_channels != self.layers[i].pw.out_channels:
-        #             # print(self.layers[i])
-        #             out_list.append(out_conv)
-        #     elif isinstance(self.layers[i], nn.Conv2d):
-        #         if self.layers[i].in_channels != self.layers[i].out_channels:
-        #             # print(self.layers[i])
-        #             out_list.append(out_conv)
-        #     else:
-        #         pass
         if out_conv.size(2) != 1:
             out_conv = self.avgPooling(out_conv)
         out = out_conv.view(out_conv.size(0), -1)
@@ -146,118 +125,3 @@ class VGG(nn.Module):
                 device = self.layers[i].weight.device
                 self.layers[i] = nn.BatchNorm2d(self.layers[i].num_features).to(device)
 
-    def dsc(self):
-        """
-        Replace standard convolution by depthwise separable convolution
-        """
-        for i in range(len(self.layers)):
-            if isinstance(self.layers[i], nn.Conv2d):
-                # print(self.layers[i])
-                shape = self.layers[i].weight.shape
-                if shape[1] > 3:
-                    compress = DepthwiseSeparableConv(self.layers[i])
-                    self.layers[i] = compress
-
-    def compress_tucker(self, loss_type='l2', rank=None, tucker_init=True, multiplier=1):
-        """
-        Compress standard convolution via tucker decomposition
-        :param distill: whether use distillation
-        :param loss_type: distillation loss
-        :param rank: projection rank (use evbmf if None)
-        :param tucker_init: whether initialize with tucker decomposition tensors
-        :param multiplier: a parameter for adjusting estimated rank
-        """
-        for i in range(len(self.layers)):
-            if isinstance(self.layers[i], nn.Conv2d):
-                # print(self.layers[i])
-                shape = self.layers[i].weight.shape
-                rank = None
-
-                # if shape[0] != 3:
-                # compress
-                compress = Tucker2DecomposedConv(
-                    self.layers[i],
-                    rank,
-                    tucker_init,
-                    multiplier=multiplier
-                )
-                self.layers[i] = compress
-            if isinstance(self.layers[i], nn.BatchNorm2d):
-                device = self.layers[i].weight.device
-                self.layers[i] = nn.BatchNorm2d(self.layers[i].num_features).to(device)
-
-    def mobileconvv2(self, expansion):
-        """
-        Replace standard convolution by MobileConvV2
-        :param expansion: (t) increase the number of input channels M into tM
-        """
-        for i in range(len(self.layers)):
-            if isinstance(self.layers[i], nn.Conv2d):
-                # print(self.layers[i])
-                shape = self.layers[i].weight.shape
-                if shape[1] > 3:
-                    compress = Block_MobileConvV2(self.layers[i].in_channels,
-                                                  self.layers[i].out_channels,
-                                                  expansion, 1)
-                    self.layers[i] = compress
-        layers = []
-        for i in range(len(self.layers)):
-            if (isinstance(self.layers[i], nn.BatchNorm2d) and isinstance(self.layers[i-1], Block_MobileConvV2)) \
-                    or (isinstance(self.layers[i], nn.ReLU) and isinstance(self.layers[i-2], Block_MobileConvV2)):
-                pass
-            else:
-                layers.append(self.layers[i])
-        self.layers = nn.Sequential(*layers)
-
-    def shuffleunit(self, groups=2, alpha=1):
-        """
-        Replace standard convolution by ShuffleUnit
-        :param groups: number of groups for group convolution
-        :param alpha: width multiplier
-        """
-        for i in range(len(self.layers)):
-            if isinstance(self.layers[i], nn.Conv2d):
-                # print(self.layers[i])
-                shape = self.layers[i].weight.shape
-                if shape[1] == 3:
-                    self.layers[i] = nn.Conv2d(3, self.layers[i].out_channels, kernel_size=3, padding=1)
-                else:
-                    combine = 'concat' if self.layers[i].in_channels != self.layers[i].out_channels else 'add'
-                    compress = ShuffleUnit(int(self.layers[i].in_channels * alpha),
-                                           int(self.layers[i].out_channels * alpha),
-                                           grouped_conv=True,
-                                           groups=self.groups,
-                                           combine=combine)
-                    self.layers[i] = compress
-        layers = []
-        for i in range(len(self.layers)):
-            if (isinstance(self.layers[i], nn.BatchNorm2d) and isinstance(self.layers[i - 1], ShuffleUnit)) \
-                    or (isinstance(self.layers[i], nn.ReLU) and isinstance(self.layers[i - 2], ShuffleUnit)):
-                pass
-            else:
-                layers.append(self.layers[i])
-        self.layers = nn.Sequential(*layers)
-
-    def shuffleunitv2(self):
-        """
-        Replace standard convolution by ShuffleUnitV2
-        """
-        for i in range(len(self.layers)):
-            if isinstance(self.layers[i], nn.Conv2d):
-                # print(self.layers[i])
-                shape = self.layers[i].weight.shape
-                if shape[1] == 3:
-                    self.layers[i] = nn.Conv2d(3, self.layers[i].out_channels, kernel_size=3, padding=1)
-                else:
-                    compress = ShuffleUnitV2(int(self.layers[i].in_channels),
-                                            int(self.layers[i].out_channels),
-                                            stride=self.layers[i].stride)
-                    self.layers[i] = compress
-        layers = []
-        for i in range(len(self.layers)):
-            if (isinstance(self.layers[i], nn.BatchNorm2d) and isinstance(self.layers[i - 1], ShuffleUnit)) \
-                    or (isinstance(self.layers[i], nn.ReLU) and isinstance(self.layers[i - 2], ShuffleUnit)):
-                pass
-            else:
-                layers.append(self.layers[i])
-        self.layers = nn.Sequential(*layers)
